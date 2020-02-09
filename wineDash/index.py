@@ -6,20 +6,17 @@ import dash_table
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
-from app import app
-from tabs import sidepanel, tab1, tab2
-from database import transforms
+
 import sqlite3
-import dash
-from dash.dependencies import Input, Output
-import dash_table
 import pandas as pd
 
 from app import app
-from tabs import sidepanel, tab1, tab2
+from tabs import sidepanel, tab1, tab2, tab3, navbar
 from database import transforms
 
-app.layout = sidepanel.layout
+app.layout = html.Div([navbar.Navbar()
+                        , sidepanel.layout
+            ])
 
 @app.callback(Output('tabs-content', 'children'),
               [Input('tabs', 'value')])
@@ -28,6 +25,8 @@ def render_content(tab):
         return tab1.layout
     elif tab == 'tab-2':
        return tab2.layout
+    elif tab == 'tab-3':
+       return tab3.layout
 
 
 operators = [['ge ', '>='],
@@ -72,16 +71,43 @@ def split_filter_part(filter_part):
      , Input('table-sorting-filtering', 'filter_query')
      , Input('rating-95', 'value')
      , Input('price-slider', 'value')
+     , Input('country-drop', 'value')
+     , Input('province-drop', 'value')
+     , Input('variety-drop', 'value') 
      ])
-def update_table(page_current, page_size, sort_by, filter, ratingcheck, prices):
+def update_table(page_current, page_size, sort_by, filter, ratingcheck, prices, country, province, variety):
     filtering_expressions = filter.split(' && ')
     dff = transforms.df
     print(ratingcheck)
+
+
 
     low = prices[0]
     high = prices[1]
 
     dff = dff.loc[(dff['price'] >= low) & (dff['price'] <= high)]
+
+    if province is None:
+        province = []
+    if variety is None:
+        variety = []
+    
+    if len(country) > 0 and len(province) > 0 and len(variety) > 0:
+        dff = dff.loc[dff['country'].isin(country) & dff['province'].isin(province) & dff['variety'].isin(variety)]
+    
+    elif len(country) > 0 and len(province) > 0 and len(variety) == 0:
+        dff = dff.loc[dff['country'].isin(country) & dff['province'].isin(province)]
+    
+    elif len(country) > 0 and len(province)== 0 and len(variety) > 0:
+        dff = dff.loc[dff['country'].isin(country) & dff['variety'].isin(variety)]
+    
+    elif len(country) > 0 and len(province)== 0 and len(variety) == 0:
+        dff = dff.loc[dff['country'].isin(country)]
+    
+    else:
+        dff
+
+    
 
     if ratingcheck == ['Y']:
         dff = dff.loc[dff['rating'] >= 95]

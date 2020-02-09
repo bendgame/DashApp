@@ -25,8 +25,9 @@ layout = html.Div([
         , options = [
             {'label':'Only rating >= 95 ', 'value':'Y'}
         ])
-        ,html.Div([html.H5('Price Slider')
-            ,dcc.RangeSlider(id='price-slider'
+        ,html.Div([html.P()
+                ,html.H5('Price Slider')
+                ,dcc.RangeSlider(id='price-slider'
                             ,min = min_p
                             ,max= max_p
                             , marks = {0: '$0',
@@ -41,16 +42,73 @@ layout = html.Div([
                             )
                         
                             ])
-    
-        ], style={'marginBottom': 50, 'marginTop': 25, 'marginLeft':15, 'marginRight':15})
-    , width=3)
+        ,html.Div([html.P()
+            ,html.H5('Country')
+            , dcc.Dropdown(id = 'country-drop'
+                        ,options=[
+                             {'label': i, 'value': i} for i in df.country.unique()
+                        ],
+                        value=['US'],
+                        multi=True
+                    )  
+        ])
+
+        ,html.Div([html.P()
+            ,html.H5('Province')
+            , dcc.Dropdown(id = 'province-drop',
+                            value=[],
+                            multi=True
+                        )  
+        ])
+
+        ,html.Div([html.P()
+            ,html.H5('Variety')
+            , dcc.Dropdown(id = 'variety-drop',
+                            value=[],
+                            multi=True
+                        )  
+        ])
+
+        ], style={'marginBottom': 50, 'marginTop': 25, 'marginLeft':15, 'marginRight':15}
+        )#end div
+    , width=3) # End col
 
     ,dbc.Col(html.Div([
             dcc.Tabs(id="tabs", value='tab-1', children=[
                     dcc.Tab(label='Data Table', value='tab-1'),
                     dcc.Tab(label='Scatter Plot', value='tab-2'),
+                    dcc.Tab(label='Heatmap Plot', value='tab-3'),
                 ])
             , html.Div(id='tabs-content')
-        ]), width=9)])
+        ]), width=9)
+        ]) #end row
     
-    ])
+    ])#end div
+
+@app.callback(Output('province-drop', 'options'),
+[Input('country-drop', 'value')])
+def set_province_options(country):
+    
+    if len(country)> 0:
+        countries = country
+        return [{'label': i, 'value': i} for i in sorted(set(df['province'].loc[df['country'].isin(countries)]))]
+       
+    else:
+        countries = []
+        return [{'label': i, 'value': i} for i in sorted(set(df['province'].loc[df['country'].isin(countries)]))]
+
+@app.callback(Output('variety-drop', 'options'),
+[Input('province-drop', 'value')])
+def set_variety_options(province):
+
+    # if province is None:
+    #     provinces = []
+    
+    if len(province)> 0:
+        provinces = province
+        return [{'label': i, 'value': i} for i in sorted(set(df['variety'].loc[df['province'].isin(provinces)]))]
+       
+    else:
+        provinces = []
+        return [{'label': i, 'value': i} for i in sorted(set(df['variety'].loc[df['province'].isin(provinces)]))]
+        
